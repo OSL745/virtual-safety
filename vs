@@ -1,9 +1,7 @@
 #!/bin/bash
-# Jason Carman; jasonmcarman@gmail.com
-# Created: February 2012
-# Updated: November 27, 2024
+# Author:
+# Date:
 # Purpose: To automate virtual machine back up and restoration
-# Version: 4.0
 
 # script should be run as ./vs [options]
 #
@@ -37,7 +35,7 @@
 # For this to work properly the directories contained in the variable must exist.  If you're doing a restore on a fresh install of the host, create the directory contained in dpath and copy the files there before you begin the process.
 
 # destination path:
-dpath='/home/jmcarman/Backups'
+dpath='/home/jmcarman/backups'
 
 # source path:
 spath='/var/lib/libvirt/images'
@@ -55,45 +53,77 @@ logfile=virtualsafety-log.txt
 ## as results may be unpredictable.                                                    ##
 #########################################################################################
 
+# A function to back up the virtual machines
 function backup() {
-	# change directory to where the virtual machines are stored as files
+
+	# Change directory to where the virtual machines are stored as files
 	cd $spath
 	
-	# use virsh dumpxml to create back ups of the virtual machines
+	# Use virsh dumpxml to create a backup of the xml file for the virtual machine
 	virsh dumpxml $vm >$dpath/$vm.xml
 
-	# gzip images and store them in back up directory, run in the background
+	# tell the user the back up is in progress
 	echo "Creating backup of $vm in $dpath"
+	
+	# Use touch to create the backup destination file if it doesn't exist, update the time and date stamp if it does
 	touch $dpath/$vm.qcow2.backup.gz
+	
+	# gzip images and store them in back up directory, run in the background
 	$(gzip <$spath/$vm.qcow2 >$dpath/$vm.qcow2.backup.gz)&
+	
+	# Call the progress function to show the user the backup is in process
 	progress
+	
+	# Append the name of the virtual machine to the log message variable (logMsg)
 	logMsg="$logMsg $vm,"
 }
 
+# A function to restore the virtual machines
 function restore() {
+
+	# Change directory to where the virtual machine backups are stored
 	cd $spath
+
+	# Tell the user the restoration is in progress
 	echo "Restoring $vm"
+
+	# Use the gunzip command to unzip the backup file and restore it to /var/lib/libvirt/images
 	$(gunzip <$dpath/$vm.qcow2.backup.gz >$spath/$vm.qcow2)&
+
+	# Call the progress function to show the user the restoration is in process
 	progress
+
+	# Append the name of the virtual machine to the log message variable (logMsg)
 	logMsg="$logMsg $vm,"
+
+	# Copy the xml file to the /var/lib/libvirt/images directory
 	cp $spath/$vm.xml $dpath/$vm.xml
+
+	# Use virsh define to define the virtual machine
 	virsh define $vm.xml
 }
 
+# A function to create and update the log file
 function logfile () {
-	# check to see if the destination and sourch path exist
+
+	# Check to see if the destination path exists
 	if [ ! -e "$dpath" ]; then
+
+		# if the destination path doesn't exist, tell the user and exit the script
 		echo "Destination path: "$dpath" does not exist, please reconfigure your script and run again"
 		exit 8
 	fi
 
+	# Check to see if the source path exists
 	if [ ! -e "$spath" ]; then
+
+		# if the source path doesn't exist, tell the user and exit the script
 		echo "Source path: "$dpath" does not exist, please reconfigure your script and run again"
 		exit 9
 	fi
 
-	logcheck=$(ls $dpath | grep $logfile)
-	if [[ "$logcheck" == "" ]]; then # log file doesn't exist, create it
+	# Check to see if the log file exists
+	if [[ ! -f $dpath/$logfile ]]; then # log file doesn't exist, create it
 		echo "VIRTUAL SAFETY LOG" > $dpath/$logfile
 		echo "FOR: $HOSTNAME" >> $dpath/$logfile
 		echo "Backup Source Location: $spath" >> $dpath/$logfile
@@ -106,6 +136,7 @@ function logfile () {
 	fi
 }
 
+# A function to show the user the progress of the backup or restoration
 function progress() {
 	# $! is most recent running process ID, check running processes to see if the backround gzip has completed.  While it's running, print a "#" on the screen every 3 seconds.	
 	while [[ $(ps | grep $!) != "" ]]; do 
@@ -115,20 +146,26 @@ function progress() {
 	echo "" # To keep messages and prompts aligned properly
 }
 
+# A function to complete the process of logging the backup or restoration
 function completion() {
+
+	# Check to see if the user selected backup or restoration
 	if [[ $b == 1 ]]; then
 		action=Backup
 	elif [[ $r == 1 ]]; then
 		action=Restoration
 	fi
+
 	# tell the user the backup process has finished
 	echo "Automated $action Complete, process logged to $dpath/$logfile"
+	
 	# append log time and date to a file for use in future documentation, add a blank line after for easier readability
 	logMsg="$logMsg created with virtualsafety script on"
 	echo "$logMsg" $(date) >> $dpath/$logfile
 	echo "" >> $dpath/$logfile
 }
 
+# Use getopts to parse the command line options
 while getopts brfo: options; do
 	case $options in
 		b) b=1
@@ -145,40 +182,52 @@ while getopts brfo: options; do
 	esac
 done
 
+# Check to see if the script is being run as root
 if [[ $(id -u) -ne 0 ]]; then
 	echo "You must run this script using sudo."
 	exit 2
 fi
 
+# Check to see if the user provided an option
 if [[ $# == 0 ]]; then
 	echo "./vs must be called with at least one arguement, -b to back up -r to restore, -f with -r if doing the restoration on a fresh install of the host"
 	exit 3
 fi
 
+# Check to see if the user selected both backup and restore
 if [[ "$b" == 1 && "$r" == 1 ]]; then
 	echo "You must select either backup (-b) or restore (-r), not both"
 	exit 4
+
+# Check to see if the user selected neither backup or restore
 elif [[ "$b" == 0 && "$r" == 0 ]]; then
 	echo "You must select either backup (-b) or restore (-r)"
 	exit 5
+
+# Check to see if the user provided a vm name but no action to perform
 elif [[ "$b" == 0 || "$r" == 0 && "$o" == 1 ]]; then
 	echo "You must select either backup (-b) or restore (-r) with -o"
 	exit 6
+
+# Check to see if the user selected -o but didn't provide a vm name
 elif [[ "$o" == 1 && $vm == "" ]]; then
 	echo "You must provide the name of a virtual machine with -o"
 	exit 7
 fi
 
+# Call the logfile function to create or update the log file
 logfile $dpath $logfile
 
+# Check to see if the user selected backup
 if [[ "$b" == 1 ]]; then
 	# tell the user the back up is in progress
 	echo "Begining automated back up..."
 	logMsg="Backups of"
 
-	# call the backup function in a for loop referencing the array set above, passing it the parameters stored in the array $vms and variables $dpath, $spath.
+	# If the user selected -o, run the backup function on one machine
 	if [[ "$o" == 1 ]]; then
 		time backup $vm $dpath $spath
+	# Else, call the backup function in a for loop referencing the array set above, passing it the parameters stored in the array $vms and variables $dpath, $spath.
 	else
 		for vm in "${vms[@]}"; do
 			time backup $vm $dpath $spath
@@ -188,13 +237,16 @@ if [[ "$b" == 1 ]]; then
 	fi	
 fi
 
+# Check to see if the user selected restore
 if [[ "$r" == 1 ]]; then
 	logMsg="Restoration of"
+
+	# Check to see if the user selected -f (indicating a fresh install of the host)
 	if [[ "$f" == 1 ]]; then
 		echo "Installing virtual machine manager and updating the host"
 		# Install virtualization software and update the host
-		apt -y install qemu-system libvirt-daemon-system virtinst virt-manager
-		apt -y update
+		apt -y install sudo apt install virt-manager
+		apt -y update && apt -y upgrade
 	else
 		echo "Begining automated restoration..."
 		if [[ "$o" == 1 ]]; then # restore only one machine
