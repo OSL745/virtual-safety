@@ -34,7 +34,7 @@
 # For this to work properly the directories contained in the variable must exist.  If you're doing a restore on a fresh install of the host, create the directory contained in dpath and copy the files there before you begin the process.
 
 # destination path:
-dpath='$HOME/backups'
+dpath='/home/jmcarman/backups'
 
 # source path:
 spath='/var/lib/libvirt/images'
@@ -106,7 +106,7 @@ logfile=virtualsafety-log.txt
 function logfile () {
 
 	# Check to see if the destination path exists
-	if [ ! -e "$dpath" ]; then
+	if [[ ! -e "$dpath" ]]; then
 
 		# if the destination path doesn't exist, tell the user and exit the script
 		echo "Destination path: "$dpath" does not exist, please reconfigure your script and run again"
@@ -114,7 +114,7 @@ function logfile () {
 	fi
 
 	# Check to see if the source path exists
-	if [ ! -e "$spath" ]; then
+	if [[ ! -e "$spath" ]]; then
 
 		# if the source path doesn't exist, tell the user and exit the script
 		echo "Source path: "$dpath" does not exist, please reconfigure your script and run again"
@@ -137,7 +137,7 @@ function logfile () {
 
 # A function to show the user the progress of the backup or restoration
 function progress() {
-	# $! is most recent running process ID, check running processes to see if the backround gzip has completed.  While it's running, print a "#" on the screen every 3 seconds.	
+	# $! is most recent running process ID, check running processes to see if the background gzip has completed.  While it's running, print a "#" on the screen every 3 seconds.	
 	while [[ $(ps | grep $!) != "" ]]; do 
 		echo -n '#'
 		sleep 3
@@ -189,7 +189,7 @@ fi
 
 # Check to see if the user provided an option
 if [[ $# == 0 ]]; then
-	echo "./vs must be called with at least one arguement, -b to back up -r to restore, -f with -r if doing the restoration on a fresh install of the host"
+	echo "./vs must be called with at least one argument, -b to back up -r to restore, -f with -r if doing the restoration on a fresh install of the host"
 	exit 3
 fi
 
@@ -220,7 +220,7 @@ logfile $dpath $logfile
 # Check to see if the user selected backup
 if [[ "$b" == 1 ]]; then
 	# tell the user the back up is in progress
-	echo "Begining automated back up..."
+	echo "Beginning automated back up..."
 	logMsg="Backups of"
 
 	# If the user selected -o, run the backup function on one machine
@@ -247,11 +247,11 @@ if [[ "$r" == 1 ]]; then
 		apt -y install sudo apt install virt-manager
 		apt -y update && apt -y upgrade
 	else
-		echo "Begining automated restoration..."
+		echo "Beginning automated restoration..."
 		if [[ "$o" == 1 ]]; then # restore only one machine
 			time restore $vm $dpath $spath
 		else
-			# call the restore function in a for loop refferencing the array set above, passing it the parameters stored in the array $vms and variables $dpath, $spath.
+			# call the restore function in a for loop referencing the array set above, passing it the parameters stored in the array $vms and variables $dpath, $spath.
 			for vm in "${vms[@]}"; do
 				time restore $vm $dpath $spath
 			done
