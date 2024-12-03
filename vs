@@ -53,54 +53,54 @@ logfile=virtualsafety-log.txt
 #########################################################################################
 
 # A function to back up the virtual machines
-function backup() {
+
 
 	# Change directory to where the virtual machines are stored as files
-	cd $spath
+
 	
 	# Use virsh dumpxml to create a backup of the xml file for the virtual machine
-	virsh dumpxml $vm >$dpath/$vm.xml
+
 
 	# tell the user the back up is in progress
-	echo "Creating backup of $vm in $dpath"
+
 	
 	# Use touch to create the backup destination file if it doesn't exist, update the time and date stamp if it does
-	touch $dpath/$vm.qcow2.backup.gz
+
 	
 	# gzip images and store them in back up directory, run in the background
-	$(gzip <$spath/$vm.qcow2 >$dpath/$vm.qcow2.backup.gz)&
+
 	
 	# Call the progress function to show the user the backup is in process
-	progress
+
 	
 	# Append the name of the virtual machine to the log message variable (logMsg)
-	logMsg="$logMsg $vm,"
-}
+
+
 
 # A function to restore the virtual machines
-function restore() {
+
 
 	# Change directory to where the virtual machine backups are stored
-	cd $spath
+
 
 	# Tell the user the restoration is in progress
-	echo "Restoring $vm"
+
 
 	# Use the gunzip command to unzip the backup file and restore it to /var/lib/libvirt/images
-	$(gunzip <$dpath/$vm.qcow2.backup.gz >$spath/$vm.qcow2)&
+
 
 	# Call the progress function to show the user the restoration is in process
-	progress
+
 
 	# Append the name of the virtual machine to the log message variable (logMsg)
-	logMsg="$logMsg $vm,"
+
 
 	# Copy the xml file to the /var/lib/libvirt/images directory
-	cp $spath/$vm.xml $dpath/$vm.xml
+
 
 	# Use virsh define to define the virtual machine
-	virsh define $vm.xml
-}
+
+
 
 # A function to create and update the log file
 function logfile () {
