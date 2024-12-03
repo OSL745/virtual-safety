@@ -2,8 +2,7 @@
 # Author:
 # Date:
 # Purpose: To automate virtual machine back up and restoration
-
-# script should be run as ./vs [options]
+# Usage: ./vs [options]
 #
 # possible options:
 # 	-b  - Backup
