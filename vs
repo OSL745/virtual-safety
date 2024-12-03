@@ -34,7 +34,7 @@
 # For this to work properly the directories contained in the variable must exist.  If you're doing a restore on a fresh install of the host, create the directory contained in dpath and copy the files there before you begin the process.
 
 # destination path:
-dpath='/home/jmcarman/backups'
+dpath='$HOME/backups'
 
 # source path:
 spath='/var/lib/libvirt/images'
