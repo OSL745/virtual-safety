@@ -70,9 +70,6 @@ logfile=virtualsafety-log.txt
 	# gzip images and store them in back up directory, run in the background
 
 	
-	# Call the progress function to show the user the backup is in process
-
-	
 	# Append the name of the virtual machine to the log message variable (logMsg)
 
 
@@ -87,9 +84,6 @@ logfile=virtualsafety-log.txt
 
 
 	# Use the gunzip command to unzip the backup file and restore it to /var/lib/libvirt/images
-
-
-	# Call the progress function to show the user the restoration is in process
 
 
 	# Append the name of the virtual machine to the log message variable (logMsg)
@@ -133,16 +127,6 @@ function logfile () {
 	else # update the end date
 		sed -i "s/End\:.*/End\:\ $(date +'%d-%b-%Y')/" $dpath/$logfile
 	fi
-}
-
-# A function to show the user the progress of the backup or restoration
-function progress() {
-	# $! is most recent running process ID, check running processes to see if the background gzip has completed.  While it's running, print a "#" on the screen every 3 seconds.	
-	while [[ $(ps | grep $!) != "" ]]; do 
-		echo -n '#'
-		sleep 3
-	done
-	echo "" # To keep messages and prompts aligned properly
 }
 
 # A function to complete the process of logging the backup or restoration
