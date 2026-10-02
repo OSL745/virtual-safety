@@ -120,7 +120,7 @@ function logfile () {
 		echo "VIRTUAL SAFETY LOG" > $dpath/$logfile
 		echo "FOR: $HOSTNAME" >> $dpath/$logfile
 		echo "Backup Source Location: $spath" >> $dpath/$logfile
-		echo "Backup Destination Location: $dpath" >> $dpath/$logifle
+		echo "Backup Destination Location: $dpath" >> $dpath/$logfile
 		echo "Start: " $(date +'%d-%b-%Y') >> $dpath/$logfile
 		echo "End: " >> $dpath/$logfile
 		echo "--------------------------------------" >> $dpath/$logfile
